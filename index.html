@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>쉼폰 (SwimPhone) - 홈화면 & 지뢰찾기 인터랙티브 프로토타입</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        /* 스마트폰 외형 */
+        .phone-container {
+            position: relative;
+            width: 360px;
+            height: 740px;
+            background-color: #1a1a1a;
+            border-radius: 48px;
+            padding: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3), 0 0 0 10px #2d3748;
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 24px;
+            background-color: #1a1a1a;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 500;
+        }
+
+        .phone-screen {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            border-radius: 36px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 상태바 (시간, 배터리) */
+        .status-bar {
+            height: 40px;
+            padding: 12px 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 400;
+        }
+
+        /* 홈 화면 (OS) */
+        .home-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            padding: 60px 20px 40px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px 15px;
+            margin-top: 20px;
+        }
+
+        .app-icon-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .app-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            margin-bottom: 6px;
+            transition: transform 0.1s;
+        }
+
+        .app-icon:active {
+            transform: scale(0.92);
+        }
+
+        .icon-swimphone { background: linear-gradient(135deg, #0284c7, #38bdf8); }
+        .icon-minesweeper { background: linear-gradient(135deg, #475569, #94a3b8); }
+        .icon-dummy { background: rgba(255,255,255,0.1); color: #94a3b8; font-size: 1.2rem; }
+
+        .app-label {
+            color: white;
+            font-size: 0.72rem;
+            text-align: center;
+        }
+
+        /* 화면/앱 공통 서식 */
+        .app-window {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 20;
+        }
+
+        .app-window.active {
+            transform: translateY(0);
+        }
+
+        /* 쉼폰 앱 화면 */
+        .swimphone-header {
+            padding: 45px 20px 15px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            text-align: center;
+        }
+
+        .app-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #f8fafc;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .btn-primary { background-color: #0284c7; color: white; }
+        .btn-danger { background-color: #ef4444; color: white; }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+        }
+
+        .input-group select {
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        /* 지뢰찾기 앱 화면 */
+        .minesweeper-header {
+            padding: 45px 15px 10px;
+            background: #334155;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .minesweeper-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 3px;
+            background-color: #94a3b8;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background-color: #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .cell.revealed { background-color: #e2e8f0; }
+        .cell.mine { background-color: #ef4444; }
+
+        /* 하단 홈 인디케이터 (홈 버튼) */
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 3px;
+            cursor: pointer;
+            z-index: 600;
+        }
+
+        .app-window .home-indicator {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 위치 위험 알림 오버레이 */
+        .alert-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(220, 38, 38, 0.95);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            text-align: center;
+            z-index: 700;
+            display: none;
+        }
+
+        .alert-overlay.active { display: flex; }
+
+        /* 잠금 화면 오버레이 */
+        .lock-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0f172a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 800;
+            display: none;
+        }
+
+        .lock-overlay.active { display: flex; }
+
+        .status-panel {
+            background-color: #0f172a;
+            color: #38bdf8;
+            font-family: monospace;
+            font-size: 0.75rem;
+            padding: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📱 쉼폰 (SwimPhone)</h1>
+        <p>앱을 클릭해 스마트폰과 스크린타임 기능을 직접 체험해보세요!</p>
+    </header>
+
+    <div class="phone-container">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+            
+            <!-- 상단 상태바 -->
+            <div class="status-bar">
+                <span>09:41</span>
+                <span>5G 🔋 85%</span>
+            </div>
+
+            <!-- 1. OS 홈 화면 -->
+            <div class="home-screen" id="home-screen">
+                <div class="app-grid">
+                    <!-- 쉼폰 앱 아이콘 -->
+                    <div class="app-icon-wrapper" onclick="openApp('swimphone-app')">
+                        <div class="app-icon icon-swimphone">🏊</div>
+                        <span class="app-label">쉼폰</span>
+                    </div>
+
+                    <!-- 지뢰찾기 앱 아이콘 -->
+                    <div class="app-icon-wrapper" onclick="openApp('minesweeper-app')">
+                        <div class="app-icon icon-minesweeper">💣</div>
+                        <span class="app-label">지뢰찾기</span>
+                    </div>
+
+                    <!-- 기타 장식 아이콘들 -->
+                    <div class="app-icon-wrapper"><div class="app-icon icon-dummy">📞</div><span class="app-label">전화</span></div>
+                    <div class="app-icon-wrapper"><div class="app-icon icon-dummy">💬</div><span class="app-label">메시지</span></div>
+                    <div class="app-icon-wrapper"><div class="app-icon icon-dummy">📷</div><span class="app-label">카메라</span></div>
+                    <div class="app-icon-wrapper"><div class="app-icon icon-dummy">🎵</div><span class="app-label">음악</span></div>
+                </div>
+            </div>
+
+            <!-- 2. 쉼폰 앱 화면 -->
+            <div class="app-window" id="swimphone-app">
+                <div class="swimphone-header">
+                    <h2>쉼폰 (SwimPhone)</h2>
+                    <small>안전 보행 & 스크린타임 설정</small>
+                </div>
+                <div class="app-content">
+                    
+                    <div class="card">
+                        <div class="card-title">⚠️ 보행 중 위험지역 접근 테스트</div>
+                        <p style="font-size: 0.78rem; color: #64748b; margin-bottom: 6px;">공사장, 호수 등 감지 시 즉시 경고창을 띄웁니다.</p>
+                        <button class="btn-action btn-danger" onclick="triggerGeoAlert()">[ 테스트 ] 위험지역 접근 알림</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">⏳ 백그라운드 스크린타임 설정</div>
+                        <div class="input-group">
+                            <label>사용 허용 시간</label>
+                            <select id="usage-time">
+                                <option value="0.08">테스트용 (5초 후 잠금)</option>
+                                <option value="1">1분</option>
+                                <option value="30">30분</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>잠금 유지 시간</label>
+                            <select id="lock-time">
+                                <option value="0.1">테스트용 (6초간 잠금)</option>
+                                <option value="10">10분 잠금</option>
+                                <option value="midnight">다음날 00시까지</option>
+                            </select>
+                        </div>
+                        <button class="btn-action btn-primary" onclick="startScreenTime()">스크린타임 시작하기</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">📊 시스템 백그라운드 상태</div>
+                        <div class="status-panel">
+                            <div>GPS 감지: <span id="st-gps" style="color:#4ade80;">ON</span></div>
+                            <div>스크린타임: <span id="st-time" style="color:#94a3b8;">대기 중</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 3. 지뢰찾기 앱 화면 -->
+            <div class="app-window" id="minesweeper-app">
+                <div class="minesweeper-header">
+                    <h3>💣 지뢰찾기</h3>
+                    <button onclick="initMinesweeper()" style="padding: 4px 8px; font-size: 0.75rem;">새 게임</button>
+                </div>
+                <div class="app-content" style="align-items: center; justify-content: center;">
+                    <p style="font-size: 0.8rem; color: #475569;">게임 중에도 쉼폰 스크린타임이 작동합니다.</p>
+                    <div class="minesweeper-board" id="board"></div>
+                </div>
+            </div>
+
+            <!-- 오버레이: 위험 알림 -->
+            <div class="alert-overlay" id="alert-overlay">
+                <h2 style="font-size: 1.5rem; margin-bottom: 8px;">⚠️ 위험지역 접근!</h2>
+                <p style="font-size: 0.9rem; margin-bottom: 16px;">전방에 공사구역이 있습니다.<br>스마트폰에서 눈을 떼세요!</p>
+                <button onclick="closeAlert()" style="padding: 8px 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer;">확인했습니다</button>
+            </div>
+
+            <!-- 오버레이: 스크린타임 잠금 -->
+            <div class="lock-overlay" id="lock-overlay">
+                <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+                <h2>쉼폰 잠금 실행 중</h2>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px;">약속한 사용 시간이 종료되었습니다.</p>
+                <div id="lock-timer-display" style="font-size: 2.2rem; font-weight: bold; color: #38bdf8; margin: 15px 0;">00:00</div>
+                <small style="color: #64748b;">주변을 둘러보고 휴식을 취하세요.</small>
+            </div>
+
+            <!-- 하단 홈 버튼 (인디케이터) -->
+            <div class="home-indicator" onclick="goHome()"></div>
+
+        </div>
+    </div>
+
+    <script>
+        let lockTimerInterval;
+
+        // 앱 열기/닫기 (홈키)
+        function openApp(appId) {
+            document.getElementById(appId).classList.add('active');
+        }
+
+        function goHome() {
+            const apps = document.querySelectorAll('.app-window');
+            apps.forEach(app => app.classList.remove('active'));
+        }
+
+        // 1. 위치 경고 알림
+        function triggerGeoAlert() {
+            document.getElementById('alert-overlay').classList.add('active');
+        }
+
+        function closeAlert() {
+            document.getElementById('alert-overlay').classList.remove('active');
+        }
+
+        // 2. 스크린 타임
+        function startScreenTime() {
+            const usageMin = parseFloat(document.getElementById('usage-time').value);
+            const lockOpt = document.getElementById('lock-time').value;
+
+            const usageSec = usageMin * 60;
+            document.getElementById('st-time').innerText = `작동 중 (${Math.ceil(usageSec)}초 후 잠금)`;
+            document.getElementById('st-time').style.color = '#facc15';
+
+            alert(`${Math.ceil(usageSec)}초 후 휴대폰 잠금이 시작됩니다. 지뢰찾기 앱을 실행해 테스트해보세요!`);
+
+            setTimeout(() => {
+                activateScreenLock(lockOpt);
+            }, usageSec * 1000);
+        }
+
+        function activateScreenLock(lockOpt) {
+            let lockSec = 0;
+            if (lockOpt === 'midnight') {
+                const now = new Date();
+                const midnight = new Date();
+                midnight.setHours(24,0,0,0);
+                lockSec = Math.floor((midnight - now) / 1000);
+            } else {
+                lockSec = parseFloat(lockOpt) * 60;
+            }
+
+            const lockOverlay = document.getElementById('lock-overlay');
+            const timerDisplay = document.getElementById('lock-timer-display');
+            lockOverlay.classList.add('active');
+
+            updateLockTimerText(lockSec, timerDisplay);
+
+            clearInterval(lockTimerInterval);
+            lockTimerInterval = setInterval(() => {
+                lockSec--;
+                if (lockSec <= 0) {
+                    clearInterval(lockTimerInterval);
+                    lockOverlay.classList.remove('active');
+                    document.getElementById('st-time').innerText = '대기 중';
+                    document.getElementById('st-time').style.color = '#94a3b8';
+                } else {
+                    updateLockTimerText(lockSec, timerDisplay);
+                }
+            }, 1000);
+        }
+
+        function updateLockTimerText(sec, element) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            element.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // 3. 간단 지뢰찾기 로직
+        function initMinesweeper() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            const size = 64; // 8x8
+            const mineIndex = Math.floor(Math.random() * size);
+
+            for (let i = 0; i < size; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.onclick = () => {
+                    if (i === mineIndex) {
+                        cell.classList.add('mine');
+                        cell.innerText = '💣';
+                        alert('지뢰를 밟았습니다! 다시 시작하세요.');
+                    } else {
+                        cell.classList.add('revealed');
+                        cell.innerText = '1';
+                    }
+                };
+                board.appendChild(cell);
+            }
+        }
+
+        // 초기화
+        initMinesweeper();
+    </script>
+</body>
+</html>
